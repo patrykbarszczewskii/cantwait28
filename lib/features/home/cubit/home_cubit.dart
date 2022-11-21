@@ -1,20 +1,20 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cantwait28/models/item_model.dart';
+import 'package:cantwait28/repositories/item_repository.dart';
+
 
 part 'home_state.dart';
 
 class HomeCubit extends Cubit<HomeState> {
-  HomeCubit() : super(const HomeState());
+  HomeCubit(this._itemRepository) : super(const HomeState());
 
   StreamSubscription? _streamSubscription;
+  final ItemRepository _itemRepository;
 
   Future<void> start() async {
-    _streamSubscription = FirebaseFirestore.instance
-        .collection('items')
-        .orderBy('release_date')
-        .snapshots().listen(
+    _streamSubscription = _itemRepository.getItemsStream().listen(
       (items) {
         emit(HomeState(items: items));
       },
@@ -27,10 +27,7 @@ class HomeCubit extends Cubit<HomeState> {
 
   Future<void> remove({required String documentID}) async {
     try {
-      await FirebaseFirestore.instance
-          .collection('items')
-          .doc(documentID)
-          .delete();
+      await _itemRepository.delete(id: documentID);
     } catch (error) {
       emit(
         const HomeState(removingErrorOccured: true),
